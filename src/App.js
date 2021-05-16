@@ -22,7 +22,7 @@ export default function App() {
   useEffect(() => {
     fetch('http://localhost:3000/todos')
       .then(response => {
-        if (response.status === 200) {
+        if (response.status <= 299) {
           return response.json()
         } else {
           setError(response.status)
@@ -33,19 +33,19 @@ export default function App() {
   
   useEffect(() => {
     fetch(`http://localhost:3000/todos?_limit=0`)
-      .then(response => response.status === 200 ? setSizeServerTodos(+response.headers.get('X-Total-Count')) : setError(response.status))
+      .then(response => response.status <= 299 ? setSizeServerTodos(+response.headers.get('X-Total-Count')) : setError(response.status))
   }, [todos, filter]);
 
   useEffect(() => {
     fetch('http://localhost:3000/todos')
       .then(response => {
-        if (response.status === 200) {
+        if (response.status <= 299) {
           return response.json()
         } else {
           setError(response.status)
         }
       })
-        .then(todos => {
+      .then(todos => {
           const newLength = todos.length;
           const newActive = todos.filter((todo) => !todo.completed).length;
           const newComplete = newLength - newActive;
@@ -54,12 +54,9 @@ export default function App() {
             active: newActive,
             complete: newComplete
           });
-        })
+      })
+      setError(null)
   }, [todos]);
-
-  useEffect(() => {
-    setError(null)
-  },[todos])
 
   const addItem = ({ value }) => {
     const newTodos = {
@@ -75,7 +72,7 @@ export default function App() {
       },
       body: JSON.stringify(newTodos)
     })
-      .then(response => response.status === 201 ? filteredTodos(filter): setError(response.status))
+      .then(response => response.status <= 299 ? filteredTodos(filter): setError(response.status))
   };
 
   const deleteItem = (id) => {
@@ -86,7 +83,7 @@ export default function App() {
         'Content-Type': 'application/json;charset=utf-8'
       }
     })
-      .then(response => response.status === 200 ? filteredTodos(filter) : setError(response.status))
+      .then(response => response.status <= 299 ? filteredTodos(filter) : setError(response.status))
   };
 
   const editItem = (id, newValue, completed) => {
@@ -102,19 +99,25 @@ export default function App() {
         'completed': completed
       })
     })
-      .then(response => response.status === 200 ? filteredTodos(filter) : setError(response.status))
+      .then(response => response.status <= 299 ? filteredTodos(filter) : setError(response.status))
   };
 
   const filteredTodos = (filter) => {
 
     if (filter === 'all') {
       fetch('http://localhost:3000/todos')
-        .then(response => response.json()
-          .then(todos => setTodos(todos.reverse())))
+        .then(response => {
+          if (response.status <=299) {
+            return response.json()
+          } else {
+            setError(response.status)
+          }
+        })
+        .then(todos => setTodos(todos.reverse()))
     } else {
       fetch(`http://localhost:3000/todos?completed=${filter === 'completed' ? true : false}`)
         .then(response => {
-          if (response.status === 200) {
+          if (response.status <=299) {
             return response.json()
           } else {
             setError(response.status)
@@ -137,7 +140,7 @@ export default function App() {
         'completed': completed
       })
     })
-      .then(response => response.status === 200 ? filteredTodos(filter) : setError(response.status))
+      .then(response => response.status <= 299 ? filteredTodos(filter) : setError(response.status))
   };
  
   const deleteCompletedTodos = () => {
@@ -152,7 +155,7 @@ export default function App() {
           }
         })
           .then(response => {
-            response.status === 200 ? countSuccessfulRequest++ : setError(response.status);
+            response.status <=299 ? countSuccessfulRequest++ : setError(response.status);
             if (countSuccessfulRequest === serverStatistic.complete) filteredTodos(filter)
           })
       }
@@ -176,7 +179,7 @@ export default function App() {
         })
       })
         .then(response => {
-          response.status === 200 ? countSuccessfulRequest++ : setError(response.status)
+          response.status <=299 ? countSuccessfulRequest++ : setError(response.status)
           if (countSuccessfulRequest === serverStatistic.length) filteredTodos(filter)
         })   
     })
